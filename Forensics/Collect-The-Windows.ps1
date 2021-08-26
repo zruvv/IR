@@ -10,17 +10,17 @@
 #>
 
 Write-Host "
- ______      _ _           _       _______ _              __          ___           _                   
-/  ____|    | | |         | |     |__   __| |             \ \        / (_)         | |                  
-| |     ___ | | | ___  ___| |_ ______| |  | |__   ___ ______ \  /\  / / _ _ __   __| | ___ _      _ ___ 
+ _____       _ _           _       _______ _              __          __            _                    
+/ ____|     | | |         | |     |__   __| |             \ \        / (_)         | |                  
+| |     ___ | | | ___  ___| |_ ______| |  | |__   ___ ______ \  /\  / / _ _ __   __| | _____      _____ 
 | |    / _ \| | |/ _ \/ __| __|______| |  | '_ \ / _ \______\ \/  \/ / | | '_ \ / _` |/ _ \ \ /\ / / __|
 | |____ (_) | | |  __/ (__| |_       | |  | | | |  __/       \  /\  /  | | | | | (_| | (_) \ V  V /\__ \
-\______\___/|_|_|\___|\___|\__|      |_|  |_| |_|\___|        \/  \/   |_|_| |_|\__,_|\___/ \_/\_/ |___/
-                                                                                                       
-                                                                                                       "
+\ _____\___/|_|_|\___|\___|\__|      |_|  |_| |_|\___|        \/  \/   |_|_| |_|\__,_|\___/ \_/\_/ |___/    "
+
+Write-Host "Run as Administrator to collect data from all areas (example: Security event logs)"
 
 #Collect Scheduled Tasks
-Get-ScheduledTask | select TaskName, State, Description, Author, date, TaskPath, Triggers | Export-Csv ScheduledTasks.csv
+Get-ScheduledTask | Select-Object TaskName, State, Description, Author, date, TaskPath, Triggers | Export-Csv ScheduledTasks.csv
 
 #Collect running processes
 Get-Process | Select-Object Name, ID, ProcessName, Description, Product, Path, Company, ProductVersion, StartTime, MainModule |  Export-Csv RunningProcesses.csv
