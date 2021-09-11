@@ -19,6 +19,7 @@ Write-Host "
 
 Write-Host "Run as Administrator to collect data from all areas (example: Security event logs)`n"
 
+#Check for elevated permissions
 Write-Host "Checking for elevated permissions..."
 $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = New-Object System.Security.Principal.WindowsPrincipal($identity)
@@ -27,44 +28,55 @@ if ($principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administ
 else
     {Write-Warning "Script is not running as administrator, you will not collect all relevant data!" }
 
+#Progress bar function
+function Write-ProgressHelper {
+	param (
+	    [int]$StepNumber,
+	    [string]$Message
+	)
+	Write-Progress -Activity 'Title' -Status $Message -PercentComplete (($StepNumber / $steps) * 100)
+}
+$script:steps = ([System.Management.Automation.PsParser]::Tokenize((gc "$PSScriptRoot\$($MyInvocation.MyCommand.Name)"), [ref]$null) | where { $_.Type -eq 'Command' -and $_.Content -eq 'Write-ProgressHelper' }).Count
+$stepCounter = 0
+
 #Collect Scheduled Tasks
-Write-Host "Collecting Scheduled Tasks"
+Write-ProgressHelper -Message 'Collecting scheduled tasks' -StepNumber ($stepCounter++)
 Get-ScheduledTask | Select-Object TaskName, State, Description, Author, date, TaskPath, Triggers | Export-Csv ScheduledTasks.csv
 Write-Host "Schedules Tasks Collected`n" -ForegroundColor Green
 
 #Collect running processes
-Write-Host "Collecting Running Processes"
+Write-ProgressHelper -Message 'Collecting processes' -StepNumber ($stepCounter++)
 Get-Process | Select-Object Name, ID, ProcessName, Description, Product, Path, Company, ProductVersion, StartTime, MainModule |  Export-Csv RunningProcesses.csv
 Write-Host "Processes Collected`n" -ForegroundColor Green
 
 #Collect installed applications
-Write-Host "Collecting Installed Applications"
+Write-ProgressHelper -Message 'Collecting applications' -StepNumber ($stepCounter++)
 Get-ItemProperty HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* | Select-Object DisplayName, DisplayVersion, Publisher, InstallDate | Format-Table –AutoSize | Export-Csv Applications_Installed.csv
 Write-Host "Applications Collected`n" -ForegroundColor Green
 
 #Collect Services
-Write-Host "Collecting Services"
+Write-ProgressHelper -Message 'Collecting services' -StepNumber ($stepCounter++)
 net start > net_started-services.log
 Write-Host "Services Collected`n" -ForegroundColor Green
 
 #Collect list of running processes with their associated services in the command prompt
-Write-Host "Collecting Running Processes with Services & their executed commands"
+Write-ProgressHelper -Message 'Collecting running processes with Services & their executed commands' -StepNumber ($stepCounter++)
 tasklist /svc > tasklist_with_services_command.log
 Write-Host "Running Processes Collected`n" -ForegroundColor Green
 
 #Collect AutoStart applications
-Write-Host "Collecting AutoStart Applications"
+Write-ProgressHelper -Message 'Collecting autostart applications' -StepNumber ($stepCounter++)
 Get-CimInstance Win32_StartupCommand | Select-Object Name, command, Location, User | Export-Csv Applications_Autostart.csv
 Write-Host "AutoStart Applications Collected`n" -ForegroundColor Green
 
 #Review Registry Entries
-Write-Host "Collecting Startup Registry Keys Applications"
+Write-ProgressHelper -Message 'Collecting startup registry keys' -StepNumber ($stepCounter++)
 reg query HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run > reg_local_machine_run.log
 reg query HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run > reg_current_user_run.log
 Write-Host "Startup Registry Keys Collected`n" -ForegroundColor Green
 
 #Collect Local Accounts & Groups
-Write-Host "Collecting Local Accounts & Groups Applications"
+Write-ProgressHelper -Message 'Collecting local accounts & groups' -StepNumber ($stepCounter++)
 net user > net_user.log
 net localgroup administrators > local_admins_group.log
 Get-LocalUser > Get-LocalUser.log
@@ -72,7 +84,7 @@ Write-Host "Local Accounts & Groups Collected`n" -ForegroundColor Green
 
 
 #Collect Network Connections
-Write-Host "Collecting Network Connections"
+Write-ProgressHelper -Message 'Collecting network connections' -StepNumber ($stepCounter++)
 netstat -ano > netstat_ano.log
 #Display executables involved in creating connection
 netstat -anb > netstat_anb.log
@@ -82,14 +94,14 @@ Write-Host "Network Connections Collected`n" -ForegroundColor Green
 
 
 #Collect Firewall Settings
-Write-Host "Collecting Firewall Settings"
+Write-ProgressHelper -Message 'Collecting firewall settings' -StepNumber ($stepCounter++)
 netsh advfirewall show currentprofile > firewall_profiles.log
 #View firewall configurations for inbound and outbound rules
 netsh firewall show config > firewall_rules.log
 Write-Host "Firewall Settings Collected`n" -ForegroundColor Green
 
 #Review SMB Sharing/Sessions
-Write-Host "Collecting SMB Data"
+Write-ProgressHelper -Message 'Collecting SMB data' -StepNumber ($stepCounter++)
 Get-SMBShare | Export-Csv SMBShares.csv
 net use > smb_shared_resources.log
 net session > smb_sessions.log
@@ -105,7 +117,7 @@ Copy-Item C:\WINDOWS\System32\winevt\Logs\Microsoft-Windows-TerminalServices-Rem
 Write-Host "Completed copying of Event Log files`n" -ForegroundColor Green
 
 # Collect all recently modified files (Can take a while...Need to switch to Write-Progress)
-Write-Host "Collecting Recently Modified Files"
+Write-ProgressHelper -Message 'Collecting recently modified files' -StepNumber ($stepCounter++)
 Get-ChildItem -Path "C:\" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.CreationTime -gt (Get-Date).AddDays(-1) } | Export-Csv FileChanges_C_Drive_1day.csv
 Write-Host "Recently Modified Files Collected`n" -ForegroundColor Green
 
