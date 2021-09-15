@@ -116,7 +116,7 @@ Copy-Item C:\WINDOWS\System32\winevt\Logs\Microsoft-Windows-TerminalServices-Loc
 Copy-Item C:\WINDOWS\System32\winevt\Logs\Microsoft-Windows-TerminalServices-RemoteConnectionManager%4Admin.evtx
 Write-Host "Completed copying of Event Log files`n" -ForegroundColor Green
 
-# Collect all recently modified files (Can take a while...Need to switch to Write-Progress)
+# Collect all recently modified files (Can take a while...)
 Write-ProgressHelper -Message 'Collecting recently modified files' -StepNumber ($stepCounter++)
 Get-ChildItem -Path "C:\" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.CreationTime -gt (Get-Date).AddDays(-1) } | Export-Csv FileChanges_C_Drive_1day.csv
 Write-Host "Recently Modified Files Collected`n" -ForegroundColor Green
