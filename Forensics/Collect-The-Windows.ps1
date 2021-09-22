@@ -27,7 +27,7 @@ if ($principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administ
     Write-Host "Script is running as administrator" -ForegroundColor Gray
 } else { 
     $prompt = new-object -comobject wscript.shell 
-    $intAnswer = $prompt.popup("Script is not running as administrator and will not collect all relevant data! Do you still want to run?",0,"Delete Files",4) 
+    $intAnswer = $prompt.popup("Script is not running as administrator and will not collect all relevant data! Do you still want to run?",0,"Warning",4) 
     if ($intAnswer -eq 6) { 
         Write-Host "Running script without administrator privileges..." 
     } else { 
