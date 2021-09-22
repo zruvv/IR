@@ -5,7 +5,7 @@
         -   Collect forensic data from local system and export to local folder as evidence, should be run as administrator for all commands to run properly.
     .NOTES
         File Name: Collect-The-Windows.ps1
-        Last Updated: 8/26/2021
+        Last Updated: 9/22/2021
         Author: Mike Wurz
 #>
 
@@ -23,10 +23,18 @@ Write-Host "Run as Administrator to collect data from all areas (example: Securi
 Write-Host "Checking for elevated permissions..."
 $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = New-Object System.Security.Principal.WindowsPrincipal($identity)
-if ($principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator))
-    {Write-Host "Script is running as administrator" -ForegroundColor Gray }
-else
-    {Write-Warning "Script is not running as administrator, you will not collect all relevant data!" }
+if ($principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Host "Script is running as administrator" -ForegroundColor Gray
+} else { 
+    $prompt = new-object -comobject wscript.shell 
+    $intAnswer = $prompt.popup("Script is not running as administrator and will not collect all relevant data! Do you still want to run?",0,"Delete Files",4) 
+    if ($intAnswer -eq 6) { 
+        Write-Host "Running script without administrator privileges..." 
+    } else { 
+        $prompt.popup("This script will now exit. Please re-run with administrator privileges.")
+        exit
+    } 
+}
 
 #Progress bar function
 function Write-ProgressHelper {
@@ -36,7 +44,7 @@ function Write-ProgressHelper {
 	)
 	Write-Progress -Activity 'Title' -Status $Message -PercentComplete (($StepNumber / $steps) * 100)
 }
-$script:steps = ([System.Management.Automation.PsParser]::Tokenize((gc "$PSScriptRoot\$($MyInvocation.MyCommand.Name)"), [ref]$null) | where { $_.Type -eq 'Command' -and $_.Content -eq 'Write-ProgressHelper' }).Count
+$script:steps = ([System.Management.Automation.PsParser]::Tokenize((Get-Content "$PSScriptRoot\$($MyInvocation.MyCommand.Name)"), [ref]$null) | Where-Object { $_.Type -eq 'Command' -and $_.Content -eq 'Write-ProgressHelper' }).Count
 $stepCounter = 0
 
 #Collect Scheduled Tasks
